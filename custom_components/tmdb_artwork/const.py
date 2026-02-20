@@ -17,10 +17,16 @@ DEFAULT_MEDIA_TYPE = "movie"
 TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/multi"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
-# Frontend (Lovelace Card)
-MANIFEST_PATH = Path(__file__).parent / "manifest.json"
-with open(MANIFEST_PATH, encoding="utf-8") as f:
-    INTEGRATION_VERSION: Final[str] = json.load(f).get("version", "0.0.0")
+# Frontend (Lovelace Card) – Version sicher aus manifest lesen (vermeidet 500 beim Config-Flow)
+_INTEGRATION_VERSION = "1.0.0"
+try:
+    _manifest_path = Path(__file__).parent / "manifest.json"
+    if _manifest_path.is_file():
+        with open(_manifest_path, encoding="utf-8") as f:
+            _INTEGRATION_VERSION = json.load(f).get("version", _INTEGRATION_VERSION)
+except Exception:
+    pass
+INTEGRATION_VERSION: Final[str] = _INTEGRATION_VERSION
 
 URL_BASE: Final[str] = "/tmdb_artwork"
 JSMODULES: Final[list[dict[str, str]]] = [
