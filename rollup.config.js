@@ -21,5 +21,5 @@ export default {
       },
     }),
   ],
-  external: ["lit", "home-assistant-js-websocket"],
+  external: [],
 };
