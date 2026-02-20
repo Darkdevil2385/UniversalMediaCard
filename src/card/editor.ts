@@ -135,6 +135,8 @@ export class UniversalMediaCardEditor extends LitElement {
 
         <div class="config-section">
           <h3>Allgemeine Einstellungen</h3>
+          <p class="config-hint">Die Karte zeigt automatisch die aktive Quelle (z. B. Wiedergabe &gt; Pausiert &gt; Bereit). Lautstärke steuert immer die Audio-Quelle (Receiver), falls pro Quelle eingetragen.</p>
+          <label class="select-label">Standard-Anzeige (wenn nichts abspielt)</label>
           <select
             class="default-source-select"
             .value="${this.config.default_source || ""}"
@@ -148,7 +150,7 @@ export class UniversalMediaCardEditor extends LitElement {
               });
             }}"
           >
-            <option value="">Keine</option>
+            <option value="">Erste Quelle</option>
             ${this._sources.map((source) => html`
               <option .value="${source.entity}">
                 ${source.name || source.entity}
@@ -156,7 +158,7 @@ export class UniversalMediaCardEditor extends LitElement {
             `)}
           </select>
 
-          <ha-formfield label="App-Icon anzeigen">
+          <ha-formfield label="App-Icon/Artwork anzeigen">
             <ha-switch
               .checked="${this.config.show_app_icon !== false}"
               @change="${(e: Event) => {
@@ -165,36 +167,6 @@ export class UniversalMediaCardEditor extends LitElement {
                   config: {
                     ...this.config,
                     show_app_icon: target.checked,
-                  },
-                });
-              }}"
-            ></ha-switch>
-          </ha-formfield>
-
-          <ha-formfield label="Kompakte Ansicht">
-            <ha-switch
-              .checked="${this.config.compact_view === true}"
-              @change="${(e: Event) => {
-                const target = e.target as HTMLInputElement;
-                this._fireEvent("config-changed", {
-                  config: {
-                    ...this.config,
-                    compact_view: target.checked,
-                  },
-                });
-              }}"
-            ></ha-switch>
-          </ha-formfield>
-
-          <ha-formfield label="Source-Selector ausblenden">
-            <ha-switch
-              .checked="${this.config.hide_source_selector === true}"
-              @change="${(e: Event) => {
-                const target = e.target as HTMLInputElement;
-                this._fireEvent("config-changed", {
-                  config: {
-                    ...this.config,
-                    hide_source_selector: target.checked,
                   },
                 });
               }}"
@@ -257,6 +229,20 @@ export class UniversalMediaCardEditor extends LitElement {
     .default-source-select {
       width: 100%;
       margin-bottom: 12px;
+    }
+
+    .config-hint {
+      font-size: 0.875rem;
+      color: var(--secondary-text-color);
+      margin: 0 0 12px 0;
+      line-height: 1.4;
+    }
+
+    .select-label {
+      display: block;
+      font-size: 0.875rem;
+      margin-bottom: 6px;
+      color: var(--primary-text-color);
     }
 
     ha-formfield {

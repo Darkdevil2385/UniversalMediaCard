@@ -12,15 +12,19 @@ export declare class UniversalMediaCard extends LitElement {
     connectedCallback(): void;
     private _updateSourceStates;
     protected updated(changedProperties: Map<string | number | symbol, unknown>): void;
+    /** Ermittelt die aktuell anzuzeigende Quelle: playing > paused > idle > standby > off, sonst default/first */
+    private _computeActiveSource;
     private _getActiveSourceConfig;
     private _getActiveSourceState;
-    private _switchSource;
+    /** Für Lautstärke: immer die audio_source (Receiver) verwenden, falls konfiguriert */
+    private _getVolumeEntity;
+    private _getVolumeLevel;
+    private _getIsVolumeMuted;
     private _callService;
     private _getMediaImageUrl;
     private _renderMediaArtwork;
     private _renderMediaInfo;
     private _formatState;
-    private _renderSourceSelector;
     private _renderMediaControls;
     protected render(): TemplateResult;
     static styles: import("lit").CSSResult;
