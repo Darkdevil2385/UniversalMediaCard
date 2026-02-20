@@ -96,30 +96,43 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         });
         this._updateSourceStates();
     }
-    _renderAppIcon() {
-        if (!this._config.show_app_icon)
-            return nothing;
+    _getMediaImageUrl(state) {
+        const image = state.attributes.entity_picture ||
+            state.attributes.media_image_url ||
+            state.attributes.media_thumbnail;
+        if (!image)
+            return undefined;
+        // Wenn relative URL, mache sie absolut
+        if (image.startsWith("/")) {
+            const apiUrl = this.hass.config.api_url || window.location.origin;
+            return `${apiUrl}${image}`;
+        }
+        return image;
+    }
+    _renderMediaArtwork() {
         const state = this._getActiveSourceState();
+        if (!state)
+            return nothing;
+        const imageUrl = this._getMediaImageUrl(state);
         const config = this._getActiveSourceConfig();
-        if (!state || !config)
+        if (!config)
             return nothing;
         const handler = getHandlerForType(config.type);
         const icon = handler.getAppIcon(state);
-        const image = handler.getMediaImage(state);
-        if (image && image.startsWith("http")) {
+        if (imageUrl) {
             return html `
-        <div class="app-icon">
-          <img src="${image}" alt="${handler.getAppName(state) || ""}" />
+        <div class="media-artwork">
+          <img src="${imageUrl}" alt="Media artwork" />
         </div>
       `;
         }
         return html `
-      <div class="app-icon">
-        <ha-icon icon="${icon || "mdi:play-circle"}" class="icon-large"></ha-icon>
+      <div class="media-artwork no-image">
+        <ha-icon icon="${icon || "mdi:music-note"}" class="artwork-icon"></ha-icon>
       </div>
     `;
     }
-    _renderNowPlaying() {
+    _renderMediaInfo() {
         const state = this._getActiveSourceState();
         const config = this._getActiveSourceConfig();
         if (!state || !config)
@@ -128,17 +141,35 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         const title = handler.getMediaTitle(state);
         const subtitle = handler.getMediaSubtitle(state);
         const appName = handler.getAppName(state);
-        if (!title && !subtitle)
-            return nothing;
+        const entityName = config.name || state.attributes.friendly_name || config.entity;
         return html `
-      <div class="now-playing">
-        ${this._config.show_app_icon ? html `
+      <div class="media-info">
+        <div class="entity-name">${entityName}</div>
+        ${appName && appName !== entityName ? html `
           <div class="app-name">${appName}</div>
         ` : nothing}
-        <div class="media-title">${title || "Kein Titel"}</div>
-        ${subtitle ? html `<div class="media-subtitle">${subtitle}</div>` : nothing}
+        ${title ? html `
+          <div class="media-title">${title}</div>
+        ` : nothing}
+        ${subtitle ? html `
+          <div class="media-subtitle">${subtitle}</div>
+        ` : nothing}
+        ${state.state ? html `
+          <div class="media-state">${this._formatState(state.state)}</div>
+        ` : nothing}
       </div>
     `;
+    }
+    _formatState(state) {
+        const stateMap = {
+            playing: "Wiedergabe",
+            paused: "Pausiert",
+            idle: "Bereit",
+            off: "Aus",
+            standby: "Standby",
+            unavailable: "Nicht verfügbar",
+        };
+        return stateMap[state] || state;
     }
     _renderSourceSelector() {
         if (this._config.hide_source_selector || this._config.sources.length <= 1) {
@@ -149,13 +180,21 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         ${this._config.sources.map((source) => {
             const state = this._sourceStates.get(source.entity);
             const isActive = source.entity === this._activeSource;
+            const handler = getHandlerForType(source.type);
+            const sourceState = state ? {
+                entity: source.entity,
+                state: state.state,
+                attributes: state.attributes,
+            } : undefined;
+            const icon = sourceState ? handler.getAppIcon(sourceState) : source.icon || "mdi:cast";
             return html `
             <button
               class="source-button ${isActive ? "active" : ""}"
               @click="${() => this._switchSource(source.entity)}"
+              title="${source.name || source.entity}"
             >
-              ${source.icon ? html `<ha-icon icon="${source.icon}"></ha-icon>` : nothing}
-              <span>${source.name || source.entity}</span>
+              <ha-icon icon="${icon}"></ha-icon>
+              <span>${source.name || source.entity.split(".")[1]}</span>
             </button>
           `;
         })}
@@ -171,19 +210,24 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         const canPlay = handler.canPlay(state);
         const canPause = handler.canPause(state);
         const canControl = handler.canControl(state);
+        const isPlaying = state.state === "playing";
+        const volumeLevel = state.attributes.volume_level ?? 0;
+        const isMuted = state.attributes.is_volume_muted ?? false;
         return html `
       <div class="media-controls">
         <button
           class="control-button"
           @click="${() => this._callService("media_previous_track")}"
           ?disabled="${!canControl}"
+          title="Vorheriger Titel"
         >
           <ha-icon icon="mdi:skip-previous"></ha-icon>
         </button>
-        ${canPause ? html `
+        ${isPlaying && canPause ? html `
           <button
             class="control-button play-pause"
             @click="${() => this._callService("media_pause")}"
+            title="Pause"
           >
             <ha-icon icon="mdi:pause"></ha-icon>
           </button>
@@ -192,6 +236,7 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
             class="control-button play-pause"
             @click="${() => this._callService("media_play")}"
             ?disabled="${!canPlay}"
+            title="Abspielen"
           >
             <ha-icon icon="mdi:play"></ha-icon>
           </button>
@@ -200,18 +245,20 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
           class="control-button"
           @click="${() => this._callService("media_next_track")}"
           ?disabled="${!canControl}"
+          title="Nächster Titel"
         >
           <ha-icon icon="mdi:skip-next"></ha-icon>
         </button>
       </div>
       <div class="volume-controls">
         <button
-          class="control-button"
+          class="volume-button"
           @click="${() => this._callService("volume_mute", {
             entity_id: config.audio_source || config.entity,
         })}"
+          title="${isMuted ? "Stummschaltung aufheben" : "Stummschalten"}"
         >
-          <ha-icon icon="${state.attributes.is_volume_muted ? "mdi:volume-mute" : "mdi:volume-high"}"></ha-icon>
+          <ha-icon icon="${isMuted ? "mdi:volume-mute" : volumeLevel > 0.5 ? "mdi:volume-high" : volumeLevel > 0 ? "mdi:volume-medium" : "mdi:volume-low"}"></ha-icon>
         </button>
         <input
           type="range"
@@ -219,7 +266,7 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
           min="0"
           max="1"
           step="0.01"
-          .value="${state.attributes.volume_level || 0}"
+          .value="${volumeLevel.toString()}"
           @input="${(e) => {
             const target = e.target;
             this._callService("volume_set", {
@@ -227,7 +274,9 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
                 volume_level: parseFloat(target.value),
             });
         }}"
+          title="Lautstärke: ${Math.round(volumeLevel * 100)}%"
         />
+        <span class="volume-value">${Math.round(volumeLevel * 100)}%</span>
       </div>
     `;
     }
@@ -239,16 +288,13 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         const isCompact = this._config.compact_view;
         return html `
       <ha-card class="${isCompact ? "compact" : ""}">
-        ${this._config.title ? html `
-          <div class="card-header">
-            <h2>${this._config.title}</h2>
-          </div>
-        ` : nothing}
         ${this._renderSourceSelector()}
         <div class="card-content">
-          ${this._renderAppIcon()}
-          ${this._renderNowPlaying()}
-          ${this._renderMediaControls()}
+          ${this._renderMediaArtwork()}
+          <div class="media-section">
+            ${this._renderMediaInfo()}
+            ${this._renderMediaControls()}
+          </div>
         </div>
       </ha-card>
     `;
@@ -260,29 +306,19 @@ UniversalMediaCard.styles = css `
     }
 
     ha-card {
-      padding: 16px;
+      padding: 0;
       background: var(--card-background-color, #fff);
       border-radius: var(--ha-card-border-radius, 12px);
       box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,0.1));
-    }
-
-    .card-header {
-      margin-bottom: 16px;
-      border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.12));
-      padding-bottom: 12px;
-    }
-
-    .card-header h2 {
-      margin: 0;
-      font-size: 1.2em;
-      font-weight: 500;
-      color: var(--primary-text-color, #000);
+      overflow: hidden;
     }
 
     .source-selector {
       display: flex;
       gap: 8px;
-      margin-bottom: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.12));
+      background: var(--card-background-color, #fff);
       flex-wrap: wrap;
     }
 
@@ -290,14 +326,15 @@ UniversalMediaCard.styles = css `
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border: 1px solid var(--divider-color, rgba(0,0,0,0.12));
-      border-radius: 8px;
+      border-radius: 20px;
       background: var(--card-background-color, #fff);
       color: var(--primary-text-color, #000);
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 0.9em;
+      font-size: 0.875em;
+      font-weight: 500;
     }
 
     .source-button:hover {
@@ -311,43 +348,66 @@ UniversalMediaCard.styles = css `
       border-color: var(--primary-color, #03a9f4);
     }
 
+    .source-button ha-icon {
+      --mdc-icon-size: 18px;
+    }
+
     .card-content {
       display: flex;
-      flex-direction: column;
       gap: 16px;
+      padding: 16px;
     }
 
-    .app-icon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 80px;
-      height: 80px;
-      margin: 0 auto;
-      border-radius: 12px;
+    .media-artwork {
+      flex-shrink: 0;
+      width: 200px;
+      height: 200px;
+      border-radius: 8px;
       overflow: hidden;
       background: var(--secondary-background-color, #f5f5f5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .app-icon img {
+    .media-artwork img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .app-icon ha-icon {
-      --mdc-icon-size: 48px;
-      color: var(--primary-color, #03a9f4);
+    .media-artwork.no-image {
+      background: linear-gradient(135deg, var(--primary-color, #03a9f4) 0%, var(--accent-color, #ff9800) 100%);
     }
 
-    .now-playing {
-      text-align: center;
+    .media-artwork .artwork-icon {
+      --mdc-icon-size: 80px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .media-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .media-info {
+      flex: 1;
+    }
+
+    .entity-name {
+      font-size: 1.25em;
+      font-weight: 600;
+      color: var(--primary-text-color, #000);
+      margin-bottom: 4px;
     }
 
     .app-name {
-      font-size: 0.85em;
+      font-size: 0.875em;
       color: var(--secondary-text-color, rgba(0,0,0,0.6));
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -357,18 +417,34 @@ UniversalMediaCard.styles = css `
       font-weight: 500;
       color: var(--primary-text-color, #000);
       margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .media-subtitle {
-      font-size: 0.9em;
+      font-size: 0.95em;
       color: var(--secondary-text-color, rgba(0,0,0,0.6));
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .media-state {
+      font-size: 0.875em;
+      color: var(--secondary-text-color, rgba(0,0,0,0.6));
+      margin-top: 8px;
     }
 
     .media-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.12));
     }
 
     .control-button {
@@ -387,28 +463,57 @@ UniversalMediaCard.styles = css `
 
     .control-button:hover:not(:disabled) {
       background: var(--primary-color-dark, #0288d1);
-      transform: scale(1.05);
+      transform: scale(1.1);
     }
 
     .control-button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     .control-button.play-pause {
       width: 64px;
       height: 64px;
+      background: var(--primary-color, #03a9f4);
     }
 
     .control-button.play-pause ha-icon {
       --mdc-icon-size: 32px;
     }
 
+    .control-button ha-icon {
+      --mdc-icon-size: 24px;
+    }
+
     .volume-controls {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 0 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.12));
+    }
+
+    .volume-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--primary-text-color, #000);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .volume-button:hover {
+      background: var(--secondary-background-color, #f5f5f5);
+    }
+
+    .volume-button ha-icon {
+      --mdc-icon-size: 24px;
     }
 
     .volume-slider {
@@ -418,6 +523,7 @@ UniversalMediaCard.styles = css `
       background: var(--divider-color, rgba(0,0,0,0.12));
       outline: none;
       -webkit-appearance: none;
+      cursor: pointer;
     }
 
     .volume-slider::-webkit-slider-thumb {
@@ -428,6 +534,11 @@ UniversalMediaCard.styles = css `
       border-radius: 50%;
       background: var(--primary-color, #03a9f4);
       cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
     }
 
     .volume-slider::-moz-range-thumb {
@@ -437,6 +548,18 @@ UniversalMediaCard.styles = css `
       background: var(--primary-color, #03a9f4);
       cursor: pointer;
       border: none;
+      transition: all 0.2s;
+    }
+
+    .volume-slider::-moz-range-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .volume-value {
+      font-size: 0.875em;
+      color: var(--secondary-text-color, rgba(0,0,0,0.6));
+      min-width: 40px;
+      text-align: right;
     }
 
     .error {
@@ -445,25 +568,38 @@ UniversalMediaCard.styles = css `
       text-align: center;
     }
 
+    /* Compact View */
     ha-card.compact .card-content {
       flex-direction: row;
       align-items: center;
+      padding: 12px;
     }
 
-    ha-card.compact .app-icon {
-      width: 60px;
-      height: 60px;
-      margin: 0;
+    ha-card.compact .media-artwork {
+      width: 120px;
+      height: 120px;
     }
 
-    ha-card.compact .now-playing {
-      flex: 1;
-      text-align: left;
+    ha-card.compact .media-section {
+      gap: 8px;
     }
 
     ha-card.compact .media-controls {
-      flex-direction: column;
-      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .card-content {
+        flex-direction: column;
+      }
+
+      .media-artwork {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+      }
     }
   `;
 __decorate([

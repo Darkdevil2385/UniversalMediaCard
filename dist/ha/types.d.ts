@@ -10,6 +10,7 @@ export interface HomeAssistant {
             volume: string;
         };
         time_zone: string;
+        api_url?: string;
     };
 }
 export interface HassEntity {

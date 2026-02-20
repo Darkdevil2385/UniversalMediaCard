@@ -16,8 +16,10 @@ export declare class UniversalMediaCard extends LitElement {
     private _getActiveSourceState;
     private _switchSource;
     private _callService;
-    private _renderAppIcon;
-    private _renderNowPlaying;
+    private _getMediaImageUrl;
+    private _renderMediaArtwork;
+    private _renderMediaInfo;
+    private _formatState;
     private _renderSourceSelector;
     private _renderMediaControls;
     protected render(): TemplateResult;
