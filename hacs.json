@@ -1,6 +1,5 @@
 {
   "name": "Universal Media Card",
   "filename": "universal-media-card.js",
-  "render_readme": true,
-  "domains": ["media_player"]
+  "render_readme": true
 }

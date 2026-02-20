@@ -1,5 +1,4 @@
 node_modules/
-dist/
 *.log
 .DS_Store
 *.tsbuildinfo
@@ -8,3 +7,4 @@ dist/
 *.swp
 *.swo
 *~
+# dist/ wird mit committed, damit HACS die Datei finden kann
