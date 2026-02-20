@@ -22,6 +22,26 @@
 
 ---
 
+## Wenn der Konfigurationsdialog Fehler macht (500 / ViewTransition)
+
+Wenn beim Klick auf **„Hinzufügen“** ein Fehler kommt (500 Internal Server Error oder ViewTransition), die Integration **nur per YAML** einrichten – dann wird der Dialog nicht geöffnet.
+
+1. Integration wie oben per HACS **installieren**, HA **neu starten**.
+2. **configuration.yaml** bearbeiten (Einstellungen → System → Konfiguration) und einfügen:
+
+```yaml
+tmdb_artwork:
+  api_key: "DEIN_TMDB_API_KEY"
+```
+
+(API-Key kostenlos unter [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api))
+
+3. **Konfiguration prüfen** („Prüfen“-Button) → **Neu starten**.
+
+Beim Start legt die Integration automatisch einen Eintrag an. Die **Card** ist sofort nutzbar, der **TMDB-Sensor** (z. B. `sensor.tmdb_artwork_fallback`) ebenfalls. API-Key später ändern: in **configuration.yaml** anpassen und HA neu starten, oder die Integration unter Geräte & Dienste entfernen und erneut per YAML anlegen.
+
+---
+
 ## Installation ohne HACS (manuell)
 
 1. Aus dem Repo den kompletten Ordner **`custom_components/tmdb_artwork`** (inkl. Unterordner **`frontend`**) nach **`config/custom_components/tmdb_artwork/`** kopieren.
