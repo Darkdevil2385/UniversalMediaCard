@@ -18,6 +18,8 @@ export interface UniversalMediaCardConfig {
   compact_view?: boolean;
   hide_source_selector?: boolean;
   title?: string;
+  /** Zeigt die von der Entity gelieferten Media-Attribute an (zum Prüfen, was Gerät/Integration liefert) */
+  show_attributes?: boolean;
 }
 
 export interface MediaSourceState {
@@ -25,18 +27,25 @@ export interface MediaSourceState {
   state: string;
   attributes: {
     media_title?: string;
+    media_series_title?: string;
+    media_season?: number | string;
+    media_episode?: number | string;
     media_artist?: string;
     media_album_name?: string;
+    media_channel?: string;
     media_content_type?: string;
     media_content_id?: string;
     app_name?: string;
     app_id?: string;
+    source?: string;
     entity_picture?: string;
     media_image_url?: string;
+    media_thumbnail?: string;
     media_image_remotely_accessible?: boolean;
     volume_level?: number;
     is_volume_muted?: boolean;
     supported_features?: number;
+    friendly_name?: string;
     [key: string]: any;
   };
 }

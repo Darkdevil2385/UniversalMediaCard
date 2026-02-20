@@ -172,6 +172,22 @@ export class UniversalMediaCardEditor extends LitElement {
               }}"
             ></ha-switch>
           </ha-formfield>
+
+          <ha-formfield label="Media-Attribute anzeigen (Debug)">
+            <ha-switch
+              .checked="${this.config.show_attributes === true}"
+              @change="${(e: Event) => {
+                const target = e.target as HTMLInputElement;
+                this._fireEvent("config-changed", {
+                  config: {
+                    ...this.config,
+                    show_attributes: target.checked,
+                  },
+                });
+              }}"
+            ></ha-switch>
+          </ha-formfield>
+          <p class="config-hint">Zeigt unter der Karte, welche Attribute die Entity liefert (media_title, app_name, entity_picture …). Nützlich um zu prüfen, ob Gerät/Integration Titel/Bild liefert.</p>
         </div>
       </div>
     `;

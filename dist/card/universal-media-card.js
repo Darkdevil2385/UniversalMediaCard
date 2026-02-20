@@ -8,6 +8,7 @@ import { html, LitElement, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { registerCustomCard } from "../utils/custom-cards";
 import { getHandlerForType } from "../handlers/media-source-handlers";
+import { getRelevantAttributes } from "../utils/media-attributes";
 // Priorität: welcher State wird angezeigt (niedriger = bevorzugt)
 const STATE_PRIORITY = {
     playing: 0,
@@ -52,6 +53,7 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         }
         this._config = {
             show_app_icon: true,
+            show_attributes: false,
             ...config,
         };
     }
@@ -190,12 +192,45 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         return html `
       <div class="media-info">
         <div class="entity-name">${entityName}</div>
-        ${appName && appName !== entityName
-            ? html `<div class="app-name">${appName}</div>`
-            : nothing}
-        ${title ? html `<div class="media-title">${title}</div>` : nothing}
-        ${subtitle ? html `<div class="media-subtitle">${subtitle}</div>` : nothing}
+        ${title
+            ? html `<div class="media-title">${title}</div>`
+            : appName
+                ? html `
+                <div class="media-title app-fallback">${appName}</div>
+                <div class="media-subtitle hint">Kein Titel von der App – nur Gerätename angezeigt</div>
+              `
+                : html `<div class="media-title app-fallback">Keine Medieninfo</div>`}
+        ${title && subtitle ? html `<div class="media-subtitle">${subtitle}</div>` : nothing}
+        ${title && !subtitle && appName && appName !== entityName ? html `<div class="app-name">${appName}</div>` : nothing}
         <div class="media-state">${this._formatState(state.state)}</div>
+      </div>
+    `;
+    }
+    _renderAttributesDebug() {
+        if (!this._config.show_attributes)
+            return nothing;
+        const state = this._getActiveSourceState();
+        if (!state)
+            return nothing;
+        const attrs = getRelevantAttributes(state);
+        const keys = Object.keys(attrs);
+        if (keys.length === 0) {
+            return html `
+        <div class="attributes-debug">
+          <div class="attributes-title">Media-Attribute (von Entity)</div>
+          <div class="attributes-empty">Keine Media-Attribute gesetzt – Gerät/Integration liefert keine Titel/Bilder.</div>
+        </div>
+      `;
+        }
+        return html `
+      <div class="attributes-debug">
+        <div class="attributes-title">Media-Attribute (von Entity)</div>
+        <dl class="attributes-list">
+          ${keys.map((k) => html `
+            <dt>${k}</dt>
+            <dd>${String(attrs[k])}</dd>
+          `)}
+        </dl>
       </div>
     `;
     }
@@ -318,6 +353,7 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
             ${this._renderMediaControls()}
           </div>
         </div>
+        ${this._renderAttributesDebug()}
       </ha-card>
     `;
     }
@@ -419,6 +455,60 @@ UniversalMediaCard.styles = css `
     .media-state {
       font-size: 0.8125rem;
       color: var(--secondary-text-color);
+    }
+
+    .media-title.app-fallback {
+      color: var(--secondary-text-color);
+      font-weight: 500;
+    }
+
+    .media-subtitle.hint {
+      font-size: 0.75rem;
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .attributes-debug {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--divider-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.05));
+      border-radius: 0 0 var(--ha-card-border-radius, 12px);
+    }
+
+    .attributes-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--secondary-text-color);
+      margin-bottom: 8px;
+    }
+
+    .attributes-list {
+      margin: 0;
+      font-size: 0.8125rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2px 12px;
+    }
+
+    .attributes-list dt {
+      color: var(--secondary-text-color);
+      font-weight: 500;
+    }
+
+    .attributes-list dd {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attributes-empty {
+      font-size: 0.8125rem;
+      color: var(--secondary-text-color);
+      font-style: italic;
     }
 
     .media-controls {
