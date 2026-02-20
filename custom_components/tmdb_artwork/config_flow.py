@@ -56,13 +56,14 @@ class TMDBArtworkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data={CONF_API_KEY: api_key},
                     )
 
+        inp = user_input or {}
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
                     vol.Required(
                         CONF_API_KEY,
-                        default=user_input.get(CONF_API_KEY, "") if user_input else "",
+                        default=inp.get(CONF_API_KEY, ""),
                     ): str,
                 }
             ),

@@ -21,6 +21,8 @@ from .const import (
     DEFAULT_MEDIA_TYPE,
     TMDB_SEARCH_URL,
     TMDB_IMAGE_BASE,
+    URL_BASE,
+    JSMODULES,
 )
 from .frontend import JSModuleRegistration
 
@@ -28,10 +30,20 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
-    """Universal Media Card als Lovelace-Ressource registrieren."""
+    """Universal Media Card: Statischen Pfad registrieren und als Modul global laden (wie bei anderen Integrationen)."""
     try:
         registrar = JSModuleRegistration(hass)
         await registrar.async_register()
+        # Karte als „Extra Module URL“ beim Frontend eintragen – wird dann auf jeder Seite geladen,
+        # kein manuelles Ressourcen-Eintragen in Lovelace nötig (vermeidet „Custom element doesn't exist“).
+        try:
+            from homeassistant.components.frontend import add_extra_js_url
+            for module in JSMODULES:
+                url = f"{URL_BASE}/{module['filename']}"
+                add_extra_js_url(hass, url, es5=False)
+            _LOGGER.debug("Universal Media Card als Frontend-Modul registriert")
+        except Exception as e:
+            _LOGGER.warning("Frontend add_extra_js_url fehlgeschlagen (Karte ggf. unter Ressourcen eintragen): %s", e)
     except Exception as e:
         _LOGGER.warning("Frontend-Registrierung (Universal Media Card) fehlgeschlagen: %s", e)
 
@@ -108,6 +120,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Integration entladen (z. B. beim Löschen des Eintrags)."""
+    try:
+        from homeassistant.components.frontend import remove_extra_js_url
+        for module in JSMODULES:
+            remove_extra_js_url(hass, f"{URL_BASE}/{module['filename']}", es5=False)
+    except Exception:
+        pass
     await hass.config_entries.async_forward_entry_unload(config_entry, "sensor")
     hass.data.pop(DOMAIN, None)
     hass.services.async_remove(DOMAIN, SERVICE_GET_ARTWORK)
