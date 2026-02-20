@@ -1,0 +1,45 @@
+# ============================================================
+# TMDB Artwork Fallback – Konfigurationsbeispiel für Home Assistant
+# ============================================================
+# 1) In configuration.yaml eintragen (optional – sonst Integration über UI):
+# ------------------------------------------------------------
+
+tmdb_artwork:
+  api_key: "DEIN_TMDB_API_KEY"   # Kostenlos: https://www.themoviedb.org/settings/api
+
+# ------------------------------------------------------------
+# 2) Optional: Automation – Fallback-Artwork bei neuem Titel (ohne eigenes Bild)
+# ------------------------------------------------------------
+# In automations.yaml oder über UI anlegen:
+
+# - id: tmdb_artwork_fallback_android_tv
+#   alias: TMDB Artwork bei Android TV Titel
+#   description: Holt TMDB-Poster wenn der Media Player Titel hat aber kein Bild.
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - media_player.android_tv
+#       attribute:
+#         - media_title
+#   condition:
+#     - condition: and
+#       conditions:
+#         - condition: template
+#           value_template: "{{ state_attr('media_player.android_tv', 'media_title') | length > 0 }}"
+#         - condition: template
+#           value_template: "{{ not state_attr('media_player.android_tv', 'entity_picture') and not state_attr('media_player.android_tv', 'media_image_url') }}"
+#   action:
+#     - delay:
+#         seconds: 2   # Kurz warten, damit Titel stabil ist
+#     - service: tmdb_artwork.get_artwork
+#       data:
+#         title: "{{ state_attr('media_player.android_tv', 'media_title') }}"
+#         year: "{{ state_attr('media_player.android_tv', 'media_year') | default(none) }}"
+
+# ------------------------------------------------------------
+# 3) Universal Media Card – Artwork-Fallback nutzen
+# ------------------------------------------------------------
+# In der Card-Konfiguration (Dashboard) unter „Artwork-Fallback“ eintragen:
+#   sensor.tmdb_artwork_fallback
+# (Der genaue entity_id-Name kann je nach HA-Version leicht abweichen; in
+#  Entwicklerwerkzeugen → Zustände nach „tmdb“ oder „artwork“ suchen.)

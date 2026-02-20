@@ -1,0 +1,11 @@
+{
+  "domain": "tmdb_artwork",
+  "name": "TMDB Artwork Fallback",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/themoviedb/api",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "version": "1.0.0"
+}

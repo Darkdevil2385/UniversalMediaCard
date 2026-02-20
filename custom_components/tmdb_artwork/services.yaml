@@ -1,0 +1,24 @@
+get_artwork:
+  name: Get artwork
+  description: Sucht anhand des Titels ein Poster/Artwork bei TMDB und setzt die Fallback-URL im Sensor.
+  fields:
+    title:
+      name: Titel
+      description: Film- oder Serientitel für die Suche.
+      required: true
+      example: "Inception"
+    year:
+      name: Jahr
+      description: Optionales Jahr für genauere Treffer.
+      required: false
+      example: 2010
+    media_type:
+      name: Medientyp
+      description: "movie" oder "tv" – beeinflusst die Suchpriorität.
+      required: false
+      default: "movie"
+      selector:
+        select:
+          options:
+            - "movie"
+            - "tv"

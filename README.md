@@ -2,6 +2,8 @@
 
 Eine universelle Media Card für Home Assistant, die mehrere Medienquellen unterstützt und nahtlos zwischen ihnen wechseln kann.
 
+**Dieses Repo enthält zusätzlich die Integration „TMDB Artwork Fallback“** – zum Anzeigen von Film-/Serien-Postern, wenn die Quelle (z. B. Android TV/Netflix) kein Artwork liefert. Ordner `custom_components/tmdb_artwork/` nach `config/custom_components/tmdb_artwork/` kopieren, siehe [custom_components/tmdb_artwork/README.md](custom_components/tmdb_artwork/README.md).
+
 ## Features
 
 - 🎬 **Multi-Source-Support**: Unterstützt mehrere Medienquellen gleichzeitig
@@ -11,6 +13,7 @@ Eine universelle Media Card für Home Assistant, die mehrere Medienquellen unter
   - Generische Media Player (Receiver, etc.)
   
 - 🖼️ **App-Icon-Anzeige**: Zeigt das Icon/Logo der aktuell aktiven App/Quelle
+- 🖼️ **Artwork-Fallback**: Optional TMDB-Poster anzeigen, wenn die Quelle kein Bild liefert (Integration im Repo enthalten)
 - 🔊 **Individuelle Audio-Quellen**: Konfigurierbare Audio-Ausgabe (Receiver, Sky, Android TV)
 - 🎮 **Einheitliche Steuerung**: Alle Quellen über eine einheitliche Oberfläche steuern
 - 🔄 **Nahtloser Wechsel**: Wechsel zwischen Quellen ohne neue Card zu erstellen
@@ -69,6 +72,8 @@ compact_view: false
 | `show_app_icon` | Boolean | `true` | Zeigt das App-Icon der aktiven Quelle |
 | `compact_view` | Boolean | `false` | Kompakte Ansicht aktivieren |
 | `hide_source_selector` | Boolean | `false` | Source-Selector ausblenden |
+| `artwork_fallback_entity` | String | - | Sensor-Entity (z. B. `sensor.tmdb_artwork_fallback`) – Bild-URL als Fallback, wenn die Quelle kein Artwork liefert |
+| `show_attributes` | Boolean | `false` | Media-Attribute der aktiven Quelle zum Debug anzeigen |
 
 ### Source-Konfiguration
 
@@ -139,6 +144,15 @@ show_app_icon: true
 npm install
 npm run build
 ```
+
+## Repo-Inhalt
+
+| Pfad | Beschreibung |
+|------|--------------|
+| `src/`, `dist/` | Universal Media Card (Lovelace) |
+| `custom_components/tmdb_artwork/` | TMDB Artwork Fallback – nach `config/custom_components/tmdb_artwork/` kopieren |
+| `examples/` | YAML-Beispiele (TMDB, Automation) |
+| `GIT_BEFEHLE.md` | Git-Befehle für dieses Repo |
 
 ## Lizenz
 
