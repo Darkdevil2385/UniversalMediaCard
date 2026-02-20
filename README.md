@@ -2,7 +2,7 @@
 
 Eine universelle Media Card für Home Assistant, die mehrere Medienquellen unterstützt und nahtlos zwischen ihnen wechseln kann.
 
-**Dieses Repo enthält zusätzlich die Integration „TMDB Artwork Fallback“** – zum Anzeigen von Film-/Serien-Postern, wenn die Quelle (z. B. Android TV/Netflix) kein Artwork liefert. Ordner `custom_components/tmdb_artwork/` nach `config/custom_components/tmdb_artwork/` kopieren, siehe [custom_components/tmdb_artwork/README.md](custom_components/tmdb_artwork/README.md).
+**Eine Integration liefert beides:** Diese Repo enthält die Integration **„Universal Media (Card + TMDB Artwork)“**. Wenn du sie in Home Assistant installierst (z. B. über HACS als **Integration**), wird **die Card automatisch** als Lovelace-Ressource eingetragen und **TMDB Artwork Fallback** (für Poster ohne eigenes Artwork) steht zur Verfügung. Siehe [INSTALLATION_HA.md](INSTALLATION_HA.md).
 
 ## Features
 

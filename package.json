@@ -5,19 +5,13 @@
   "description": "Universal Media Card für Home Assistant mit Multi-Source-Support (SkyQ, Android TV, Spotify, Generic)",
   "main": "dist/universal-media-card.js",
   "scripts": {
-    "build": "tsc && npm run bundle",
+    "build": "tsc && npm run bundle && npm run copy-card",
     "bundle": "rollup -c",
+    "copy-card": "node -e \"const fs=require('fs');const p='custom_components/tmdb_artwork/frontend';fs.mkdirSync(p,{recursive:true});fs.copyFileSync('dist/universal-media-card.js',p+'/universal-media-card.js');\"",
     "watch": "tsc --watch",
     "dev": "npm run watch"
   },
-  "keywords": [
-    "home-assistant",
-    "lovelace",
-    "media-player",
-    "skyq",
-    "android-tv",
-    "spotify"
-  ],
+  "keywords": ["home-assistant", "lovelace", "media-player", "skyq", "android-tv", "spotify"],
   "author": "",
   "license": "MIT",
   "devDependencies": {

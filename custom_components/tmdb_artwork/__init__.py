@@ -1,4 +1,4 @@
-"""TMDB Artwork Fallback – Poster-URL anhand Titel von TMDB laden."""
+"""Universal Media: Card + TMDB Artwork Fallback."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from urllib.parse import quote_plus
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -21,12 +22,32 @@ from .const import (
     TMDB_SEARCH_URL,
     TMDB_IMAGE_BASE,
 )
+from .frontend import JSModuleRegistration
 
 _LOGGER = logging.getLogger(__name__)
 
 
+async def _async_register_frontend(hass: HomeAssistant) -> None:
+    """Universal Media Card als Lovelace-Ressource registrieren."""
+    try:
+        registrar = JSModuleRegistration(hass)
+        await registrar.async_register()
+    except Exception as e:
+        _LOGGER.warning("Frontend-Registrierung (Universal Media Card) fehlgeschlagen: %s", e)
+
+
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """YAML-Import: Aus configuration.yaml einen Config-Eintrag erzeugen (Rückwärtskompatibilität)."""
+    """Integration laden: Card registrieren, ggf. YAML-Import für TMDB."""
+    # Card immer registrieren (sobald HA läuft)
+    if hass.state == CoreState.running:
+        await _async_register_frontend(hass)
+    else:
+        hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STARTED,
+            lambda _: hass.async_create_task(_async_register_frontend(hass)),
+        )
+
+    # YAML-Import: Aus configuration.yaml einen Config-Eintrag erzeugen (Rückwärtskompatibilität)
     if DOMAIN not in config:
         return True
     if hass.config_entries.async_entries(DOMAIN):

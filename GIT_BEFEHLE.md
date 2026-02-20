@@ -1,45 +1,45 @@
-# Git-Befehle (Universal Media Card Repo)
+# Git – Nach jedem Update
 
-Alles liegt in **einem** Repo: die Lovelace-Card, die TMDB-Integration (zum Kopieren nach HA) und Beispiele.
-
-## Repo anlegen / Erstes Commit
+**Nach jeder Änderung (Card, Integration, Doku) – Build + Update-Commit ausführen:**
 
 ```bash
 cd "c:\Users\Skynet\Desktop\Dashboard\Universal Media Card"
-git init
-git add .
+
+npm install
+npm run build
+
+git add -A
 git status
-git commit -m "Universal Media Card + TMDB Artwork Fallback (Custom Component + Beispiele)"
+git commit -m "Update: GIT_BEFEHLE mit Update-Commit ergänzt"
+git push
 ```
 
-## Später: Änderungen committen
+*(Commit-Text in den Anführungszeichen bei Bedarf anpassen.)*
+
+---
+
+## Nur Build + Card in Integration aktualisieren
+
+Wenn du nur an der Card gearbeitet hast und sicherstellen willst, dass `frontend/universal-media-card.js` mitgeht:
+
+```bash
+cd "c:\Users\Skynet\Desktop\Dashboard\Universal Media Card"
+npm run build
+git add dist/ custom_components/tmdb_artwork/frontend/universal-media-card.js
+git commit -m "Build + Card in Integration aktualisiert"
+git push
+```
+
+---
+
+## Nur Änderungen pushen (ohne Build)
+
+Wenn du nur Konfig-/Doku-Dateien geändert hast (keine Card/Integration):
 
 ```bash
 cd "c:\Users\Skynet\Desktop\Dashboard\Universal Media Card"
 git add -A
 git status
 git commit -m "Beschreibung der Änderung"
+git push
 ```
-
-## Remote (z. B. GitHub) anbinden
-
-```bash
-git remote add origin https://github.com/DEIN_USER/universal-media-card.git
-git branch -M main
-git push -u origin main
-```
-
-## Build der Card vor Commit (wenn HACS dist nutzt)
-
-```bash
-npm install
-npm run build
-git add dist/
-git commit -m "Build aktualisiert"
-```
-
-## Repo-Inhalt
-
-- **Card:** `src/`, `dist/`, `package.json`, etc.
-- **TMDB-Integration (für HA):** `custom_components/tmdb_artwork/` → nach `config/custom_components/tmdb_artwork/` kopieren
-- **Beispiele:** `examples/TMDB_ARTWORK_CONFIG_EXAMPLE.yaml`
