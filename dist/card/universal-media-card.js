@@ -37,6 +37,8 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
     static async getStubConfig(hass) {
         const entities = Object.keys(hass.states);
         const mediaPlayers = entities.filter((e) => e.startsWith("media_player."));
+        const tmdbFallback = entities.find((e) => e.startsWith("sensor.") &&
+            (e.includes("tmdb_artwork") || (e.includes("artwork") && e.includes("fallback"))));
         return {
             type: "custom:universal-media-card",
             sources: mediaPlayers.slice(0, 2).map((entity) => ({
@@ -45,6 +47,7 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
                 name: hass.states[entity]?.attributes.friendly_name || entity,
             })),
             show_app_icon: true,
+            ...(tmdbFallback && { artwork_fallback_entity: tmdbFallback }),
         };
     }
     setConfig(config) {
@@ -148,13 +151,26 @@ let UniversalMediaCard = class UniversalMediaCard extends LitElement {
         const image = state.attributes.entity_picture ||
             state.attributes.media_image_url ||
             state.attributes.media_thumbnail;
-        if (!image)
-            return undefined;
-        if (image.startsWith("/")) {
-            const apiUrl = this.hass.config.api_url || window.location.origin;
-            return `${apiUrl}${image}`;
+        if (image) {
+            if (image.startsWith("/")) {
+                const apiUrl = this.hass.config.api_url || window.location.origin;
+                return `${apiUrl}${image}`;
+            }
+            return image;
         }
-        return image;
+        const fallbackId = this._config.artwork_fallback_entity;
+        if (fallbackId) {
+            const fallback = this.hass.states[fallbackId];
+            const url = fallback?.state;
+            if (url && typeof url === "string" && (url.startsWith("http") || url.startsWith("/"))) {
+                if (url.startsWith("/")) {
+                    const apiUrl = this.hass.config.api_url || window.location.origin;
+                    return `${apiUrl}${url}`;
+                }
+                return url;
+            }
+        }
+        return undefined;
     }
     _renderMediaArtwork() {
         const state = this._getActiveSourceState();

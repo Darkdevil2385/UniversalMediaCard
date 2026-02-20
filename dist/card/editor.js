@@ -180,6 +180,23 @@ let UniversalMediaCardEditor = class UniversalMediaCardEditor extends LitElement
             ></ha-switch>
           </ha-formfield>
           <p class="config-hint">Zeigt unter der Karte, welche Attribute die Entity liefert (media_title, app_name, entity_picture …). Nützlich um zu prüfen, ob Gerät/Integration Titel/Bild liefert.</p>
+
+          <ha-entity-picker
+            .hass="${this.hass}"
+            .value="${this.config.artwork_fallback_entity || ""}"
+            .label="Artwork-Fallback (z. B. TMDB-Sensor)"
+            .placeholder="Kein Fallback"
+            .filter="${(entity) => entity.entity_id.startsWith("sensor.") || entity.entity_id.startsWith("input_text.")}"
+            @value-changed="${(e) => {
+            this._fireEvent("config-changed", {
+                config: {
+                    ...this.config,
+                    artwork_fallback_entity: e.detail.value || undefined,
+                },
+            });
+        }}"
+          ></ha-entity-picker>
+          <p class="config-hint">Wenn die Quelle kein Bild liefert, wird der State dieser Entity als Bild-URL genutzt (z. B. sensor.tmdb_artwork_fallback von der TMDB Artwork Integration).</p>
         </div>
       </div>
     `;

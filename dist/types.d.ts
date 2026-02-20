@@ -16,6 +16,8 @@ export interface UniversalMediaCardConfig {
     title?: string;
     /** Zeigt die von der Entity gelieferten Media-Attribute an (zum Prüfen, was Gerät/Integration liefert) */
     show_attributes?: boolean;
+    /** Entity (z. B. sensor.tmdb_artwork_fallback): Bild-URL als Fallback, wenn die Quelle kein Artwork liefert (State = URL). */
+    artwork_fallback_entity?: string;
 }
 export interface MediaSourceState {
     entity: string;
